@@ -1,0 +1,53 @@
+// This #include statement was automatically added by the Particle IDE.
+#include "S3B.h"
+
+/* Function prototypes -------------------------------------------------------*/
+bool sendCommand(int* command, int len);
+
+S3B module;
+
+int button = D7;
+
+byte remoteAddress[8] = {0x00,0x13,0xA2,0x00,0x41,0x02,0x20,0x51};      //Change this to the serial number address of other XBee module
+
+byte on[1] = {0x01};
+
+byte off[1] = {0x00};
+
+/* This function is called once at start up ----------------------------------*/
+void setup()
+{
+    pinMode(button, INPUT_PULLUP);
+	module.init();
+}
+
+/* This function loops forever --------------------------------------------*/
+void loop()
+{
+    if(digitalRead(button)==HIGH){
+        sendCommand(on, 1);
+    }else{
+        sendCommand(off, 1);
+    }
+}
+
+bool sendCommand(byte* command, int len){
+	
+	int transmitRetries = 0;
+	transmitRetry:
+	if(module.transmit(remoteAddress, command, len)){
+		//Transmission successful
+		Serial.println("Command success");
+		return true;
+	}else{
+		//Transmission failed
+		Serial.printf("Command failed %i times \n", (transmitRetries+1));
+		if(transmitRetries < 3){
+			transmitRetries++;
+			goto transmitRetry;
+		}else{
+		    Serial.println("Command Failed");
+			return false;
+		}
+	}
+}
